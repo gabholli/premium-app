@@ -4,6 +4,7 @@ import joblib
 import numpy as np
 import os
 import json
+import pandas as pd
 
 # -------------------------
 # App setup
@@ -75,7 +76,10 @@ def predict():
         return jsonify({"error": f"Invalid input types: {e}"}), 400
 
     # Feature order must match training
-    X = np.array([bedrooms, sqft, coverage_a, age], dtype=float).reshape(1, -1)
+    X = pd.DataFrame(
+    [[bedrooms, sqft, coverage_a, age]], 
+    columns=["Bedrooms", "Square Footage", "Coverage A", "Age of Home"]
+)
 
     # Scale + predict
     Xs = _scaler.transform(X)
