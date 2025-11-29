@@ -1,15 +1,15 @@
 from __future__ import annotations
-from flask import Flask, request, jsonify, render_template
+from flask import Flask, request, jsonify
 import joblib
 import numpy as np
+import pandas as pd
 import os
 import json
-import pandas as pd
 
 # -------------------------
 # App setup
 # -------------------------
-app = Flask(__name__, template_folder="templates", static_folder="static")
+app = Flask(__name__)
 
 # Artifact paths (env overrides allowed)
 MODEL_PATH = os.getenv("MODEL_PATH", "model.pkl")
@@ -39,13 +39,20 @@ def load_calibration():
 # -------------------------
 # Routes
 # -------------------------
-@app.route("/health")
-def health():
-    return {"status": "ok"}
-
 @app.route("/")
 def index():
-    return render_template("index.html")
+    return jsonify({
+        "status": "ok",
+        "message": "Home Insurance Premium API",
+        "endpoints": {
+            "/health": "Health check",
+            "/predict": "POST - Calculate premium"
+        }
+    })
+
+@app.route("/health")
+def health():
+    return jsonify({"status": "ok"})
 
 @app.route("/predict", methods=["POST"])
 def predict():
@@ -75,11 +82,11 @@ def predict():
     except Exception as e:
         return jsonify({"error": f"Invalid input types: {e}"}), 400
 
-    # Feature order must match training
+    # Use pandas DataFrame with column names to match training
     X = pd.DataFrame(
-    [[bedrooms, sqft, coverage_a, age]], 
-    columns=["Bedrooms", "Square Footage", "Coverage A", "Age of Home"]
-)
+        [[bedrooms, sqft, coverage_a, age]],
+        columns=["Bedrooms", "Square Footage", "Coverage A", "Age of Home"]
+    )
 
     # Scale + predict
     Xs = _scaler.transform(X)
@@ -93,9 +100,6 @@ def predict():
 
     return jsonify({
         "predicted_premium": round(pred_cal, 2)
-        # uncomment to debug:
-        # "base_prediction": round(pred, 2),
-        # "calibration": _calib,
     })
 
 if __name__ == "__main__":
