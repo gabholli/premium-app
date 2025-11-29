@@ -45,8 +45,8 @@ def main(csv_path: str, out_model: str = "model.pkl", out_scaler: str = "scaler.
 
     # Ensure Coverage A exists (fallback to Property Value for backward compatibility)
     if "Coverage A" not in df.columns:
-        if "Coverage A" in df.columns:
-            df["Coverage A"] = df["Coverage A"]
+        if "Property Value" in df.columns:
+            df["Coverage A"] = df["Property Value"]
         else:
             raise ValueError("CSV must include 'Coverage A' (or 'Property Value' as a fallback).")
 
@@ -70,10 +70,12 @@ def main(csv_path: str, out_model: str = "model.pkl", out_scaler: str = "scaler.
     model = LinearRegression()
     model.fit(X_train_s, y_train)
 
-    # Eval
+    # Eval - FIXED: calculate RMSE manually instead of using squared parameter
     pred = model.predict(X_test_s)
     mae = mean_absolute_error(y_test, pred)
-    rmse = mean_squared_error(y_test, pred, squared=False)
+    mse = mean_squared_error(y_test, pred)
+    rmse = np.sqrt(mse)  # Calculate RMSE manually
+
     r2 = r2_score(y_test, pred)
     print({"MAE": mae, "RMSE": rmse, "R2": r2})
 
